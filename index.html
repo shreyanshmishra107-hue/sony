@@ -3,44 +3,48 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JioTV Player</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
 
 <style>
 
-*{margin:0;padding:0;box-sizing:border-box}
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
 html,body{
 background:#000;
 height:100vh;
 width:100vw;
 overflow:hidden;
-font-family:system-ui
+font-family:system-ui,-apple-system,sans-serif;
 }
+
+/* PLAYER */
 
 .shaka-video-container{
 position:absolute;
 inset:0;
 width:100%;
-height:100%
+height:100%;
 }
 
 video{
 width:100%;
 height:100%;
 background:#000;
-object-fit:contain
+object-fit:contain;
 }
 
-/* remove spinner */
 .shaka-spinner-container,
 .shaka-spinner,
 .shaka-spinner-svg{
-display:none!important
+display:none!important;
 }
 
 .error-message{
@@ -49,67 +53,53 @@ top:50%;
 left:50%;
 transform:translate(-50%,-50%);
 color:white;
-background:rgba(255,0,0,.3);
-padding:20px;
-border-radius:8px;
-display:none
-}
-
-/* TELEGRAM MODAL */
-
-.modal{
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-background:rgba(0,0,0,.6);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:9999
-}
-
-.modal.hidden{display:none}
-
-.modal-content{
-background:#111;
-padding:30px;
-border-radius:14px;
-max-width:380px;
-width:90%;
 text-align:center;
-color:white
+padding:20px;
+background:rgba(255,0,0,0.3);
+border-radius:8px;
+display:none;
 }
 
-.modal-content h2{
-margin-bottom:15px;
-color:#facc15
+/* TELEGRAM BANNER */
+
+.tg-banner{
+position:fixed;
+top:15px;
+left:50%;
+transform:translateX(-50%);
+background:#0f3c56;
+padding:16px 28px;
+border-radius:22px;
+display:flex;
+align-items:center;
+gap:12px;
+text-decoration:none;
+z-index:9999;
+box-shadow:0 8px 30px rgba(0,0,0,0.6);
+transition:0.3s;
 }
 
-.modal-content p{
-margin-bottom:20px;
-color:#ddd
+.tg-banner:hover{
+transform:translateX(-50%) scale(1.05);
 }
 
-.btn{
-width:100%;
-padding:12px;
-border:none;
-border-radius:10px;
-margin-bottom:10px;
-cursor:pointer;
-font-size:15px
+.tg-icon{
+width:42px;
+height:42px;
+border-radius:50%;
+border:2px solid rgba(255,255,255,0.35);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:20px;
+color:white;
 }
 
-#joinButton{
-background:#3b82f6;
-color:white
-}
-
-#closeButton{
-background:#333;
-color:white
+.tg-text{
+color:white;
+font-size:20px;
+font-weight:700;
+letter-spacing:1px;
 }
 
 </style>
@@ -117,53 +107,24 @@ color:white
 
 <body>
 
-<!-- TELEGRAM MODAL -->
+<!-- TELEGRAM BANNER -->
 
-<div id="telegramModal" class="modal">
-
-<div class="modal-content">
-
-<h2>Join our Telegram</h2>
-
-<p>
-Stay updated with the latest
-<strong>Live Match Links</strong>
-</p>
-
-<a href="https://t.me/SportsEera" target="_blank">
-
-<button class="btn" id="joinButton">
-Join Telegram
-</button>
-
+<a href="https://t.me/yourchannel" target="_blank" class="tg-banner">
+<div class="tg-icon">✈</div>
+<div class="tg-text">Join @MATCHES LINKS</div>
 </a>
 
-<button class="btn" id="closeButton">
-Maybe Later
-</button>
-
-</div>
-</div>
+<!-- PLAYER -->
 
 <div class="shaka-video-container" data-shaka-player>
-
-<video autoplay muted playsinline></video>
-
+<video autoplay playsinline preload="metadata"></video>
 </div>
 
-<div id="errorMsg" class="error-message"></div>
+<div class="error-message" id="errorMsg"></div>
 
 <script>
 
-const modal=document.getElementById("telegramModal");
-const closeButton=document.getElementById("closeButton");
-
-closeButton.onclick=()=>{
-modal.classList.add("hidden");
-initializePlayer();
-};
-
-async function initializePlayer(){
+document.addEventListener("DOMContentLoaded", async () => {
 
 shaka.polyfill.installAll();
 
@@ -172,43 +133,85 @@ showError("Browser not supported");
 return;
 }
 
-const tvgId=new URLSearchParams(window.location.search).get("tvid");
+const tvgId = new URLSearchParams(window.location.search).get("tvid");
 
 if(!tvgId){
-showError("Use ?tvid=s1");
+showError("Please provide tvid parameter (example: ?tvid=s1)");
 return;
 }
 
+/* COOKIE */
+
 const COOKIE="__hdnea__=st=1772937061~exp=1773023461~acl=/*~hmac=3a2e43824ebda45f276c06795d7a46bbb661123adf4fde385b92f5a2bdb951e3";
 
-const channels={
+/* CHANNELS */
+
+const sonyLivSports={
 
 s1:{
-name:"Sony Sports 1",
-url:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_1_MOB/WDVLive/index.mpd",
-kid:"4e4c5dba5bfe5a7c9338bc086eb80379",
+name:"Sony LIV Sports 1",
+streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_1_MOB/WDVLive/index.mpd",
+clearKey:{
+keyId:"4e4c5dba5bfe5a7c9338bc086eb80379",
 key:"b8e8932f440084e1d2b705fa52eef94b"
+}
 },
 
 s2:{
-name:"Sony Sports 2",
-url:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_2_MOB/WDVLive/index.mpd",
-kid:"ef24516ae38b50d18049343cd1cd998a",
+name:"Sony LIV Sports 2",
+streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_2_MOB/WDVLive/index.mpd",
+clearKey:{
+keyId:"ef24516ae38b50d18049343cd1cd998a",
 key:"eb4810ec250a1795a0019dba7881ff45"
+}
+},
+
+s3:{
+name:"Sony LIV Sports 3",
+streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_3_MOB/WDVLive/index.mpd",
+clearKey:{
+keyId:"3afa887864e6545aa006db21aeb39054",
+key:"6b8cce271f3cd923d0df32d45b44f6df"
+}
+},
+
+s5:{
+name:"Sony LIV Sports 5",
+streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_5_MOB/WDVLive/index.mpd",
+clearKey:{
+keyId:"cee8550bf50b569d8ad2ed0c5264f0d2",
+key:"565a95f1c332c03534e1e5fcc1ff9a8b"
+}
 }
 
 };
 
-if(!channels[tvgId]){
+/* ERROR FUNCTION */
+
+function showError(msg){
+const error=document.getElementById("errorMsg");
+error.textContent=msg;
+error.style.display="block";
+}
+
+/* CHANNEL CHECK */
+
+if(!sonyLivSports[tvgId]){
 showError("Channel not found");
 return;
 }
 
-const ch=channels[tvgId];
+const channelData = Object.assign({cookie:COOKIE},sonyLivSports[tvgId]);
+
+document.title = channelData.name + " - JioTV Player";
+
+/* PLAYER */
 
 const video=document.querySelector("video");
+const player=new shaka.Player();
+await player.attach(video);
 
-const player=new shaka.Player(video);
+/* UI */
 
 const ui=new shaka.ui.Overlay(
 player,
@@ -223,55 +226,82 @@ controlPanelElements:[
 "mute",
 "volume",
 "spacer",
+"language",
+"captions",
+"picture_in_picture",
 "quality",
 "fullscreen"
-]
+],
+seekBarColors:{
+base:"white",
+buffered:"blue",
+played:"white"
+}
 });
 
-player.configure({
-drm:{
+/* DRM */
+
+let drmConfig={};
+
+if(channelData.clearKey){
+
+drmConfig={
 clearKeys:{
-[ch.kid]:ch.key
+[channelData.clearKey.keyId]:channelData.clearKey.key
 }
+};
+
 }
-});
+
+player.configure({drm:drmConfig});
+
+/* HEADERS */
 
 player.getNetworkingEngine().registerRequestFilter((type,request)=>{
 
 request.headers["Referer"]="https://www.jiotv.com/";
-request.headers["User-Agent"]="plaYtv/7.1.3 (Android)";
-request.headers["Cookie"]=COOKIE;
+request.headers["User-Agent"]="plaYtv/7.1.3 (Linux;Android 13) ygx/69.1 ExoPlayerLib/824.0";
+
+if(channelData.cookie){
+request.headers["Cookie"]=channelData.cookie;
+}
+
+if(
+channelData.cookie &&
+(type===shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+type===shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+request.uris[0] &&
+!request.uris[0].includes("__hdnea__=")
+){
+
+const sep=request.uris[0].includes("?")?"&":"?";
+request.uris[0]+=sep+channelData.cookie;
+
+}
 
 });
 
-player.addEventListener("error",e=>{
-console.log(e);
+/* ERROR */
+
+player.addEventListener("error",(event)=>{
+console.error(event.detail);
 showError("Playback error");
 });
 
+/* LOAD STREAM */
+
 try{
 
-await player.load(ch.url);
+await player.load(channelData.streamUrl);
+video.play();
 
-video.muted=true;
-await video.play();
+}catch(e){
 
-}
-
-catch(e){
-
-console.log(e);
-showError("Stream failed");
+showError("Stream failed to load");
 
 }
 
-}
-
-function showError(msg){
-const el=document.getElementById("errorMsg");
-el.innerText=msg;
-el.style.display="block";
-}
+});
 
 </script>
 
