@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JioTV Player</title>
@@ -10,13 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
+*{margin:0;padding:0;box-sizing:border-box}
 html,body{
 background:#000;
 height:100vh;
@@ -24,8 +17,6 @@ width:100vw;
 overflow:hidden;
 font-family:system-ui,-apple-system,sans-serif;
 }
-
-/* PLAYER */
 
 .shaka-video-container{
 position:absolute;
@@ -59,62 +50,10 @@ background:rgba(255,0,0,0.3);
 border-radius:8px;
 display:none;
 }
-
-/* TELEGRAM BANNER */
-
-.tg-banner{
-position:fixed;
-top:15px;
-left:50%;
-transform:translateX(-50%);
-background:#0f3c56;
-padding:16px 28px;
-border-radius:22px;
-display:flex;
-align-items:center;
-gap:12px;
-text-decoration:none;
-z-index:9999;
-box-shadow:0 8px 30px rgba(0,0,0,0.6);
-transition:0.3s;
-}
-
-.tg-banner:hover{
-transform:translateX(-50%) scale(1.05);
-}
-
-.tg-icon{
-width:42px;
-height:42px;
-border-radius:50%;
-border:2px solid rgba(255,255,255,0.35);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:20px;
-color:white;
-}
-
-.tg-text{
-color:white;
-font-size:20px;
-font-weight:700;
-letter-spacing:1px;
-}
-
 </style>
 </head>
 
 <body>
-
-<!-- TELEGRAM BANNER -->
-
-<a href="https://t.me/yourchannel" target="_blank" class="tg-banner">
-<div class="tg-icon">✈</div>
-<div class="tg-text">Join @MATCHES LINKS</div>
-</a>
-
-<!-- PLAYER -->
 
 <div class="shaka-video-container" data-shaka-player>
 <video autoplay playsinline preload="metadata"></video>
@@ -124,11 +63,11 @@ letter-spacing:1px;
 
 <script>
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
 shaka.polyfill.installAll();
 
-if(!shaka.Player.isBrowserSupported()){
+if (!shaka.Player.isBrowserSupported()){
 showError("Browser not supported");
 return;
 }
@@ -136,19 +75,14 @@ return;
 const tvgId = new URLSearchParams(window.location.search).get("tvid");
 
 if(!tvgId){
-showError("Please provide tvid parameter (example: ?tvid=s1)");
+showError("Please provide tvid parameter (e.g., ?tvid=s1)");
 return;
 }
 
-/* COOKIE */
-
 const COOKIE="__hdnea__=st=1772937061~exp=1773023461~acl=/*~hmac=3a2e43824ebda45f276c06795d7a46bbb661123adf4fde385b92f5a2bdb951e3";
 
-/* CHANNELS */
-
 const sonyLivSports={
-
-s1:{
+"s1":{
 name:"Sony LIV Sports 1",
 streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_1_MOB/WDVLive/index.mpd",
 clearKey:{
@@ -156,8 +90,7 @@ keyId:"4e4c5dba5bfe5a7c9338bc086eb80379",
 key:"b8e8932f440084e1d2b705fa52eef94b"
 }
 },
-
-s2:{
+"s2":{
 name:"Sony LIV Sports 2",
 streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_2_MOB/WDVLive/index.mpd",
 clearKey:{
@@ -165,8 +98,7 @@ keyId:"ef24516ae38b50d18049343cd1cd998a",
 key:"eb4810ec250a1795a0019dba7881ff45"
 }
 },
-
-s3:{
+"s3":{
 name:"Sony LIV Sports 3",
 streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_3_MOB/WDVLive/index.mpd",
 clearKey:{
@@ -174,8 +106,7 @@ keyId:"3afa887864e6545aa006db21aeb39054",
 key:"6b8cce271f3cd923d0df32d45b44f6df"
 }
 },
-
-s5:{
+"s5":{
 name:"Sony LIV Sports 5",
 streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_5_MOB/WDVLive/index.mpd",
 clearKey:{
@@ -183,35 +114,26 @@ keyId:"cee8550bf50b569d8ad2ed0c5264f0d2",
 key:"565a95f1c332c03534e1e5fcc1ff9a8b"
 }
 }
-
 };
 
-/* ERROR FUNCTION */
-
-function showError(msg){
-const error=document.getElementById("errorMsg");
-error.textContent=msg;
-error.style.display="block";
+function showError(message){
+const errorDiv=document.getElementById("errorMsg");
+errorDiv.textContent=message;
+errorDiv.style.display="block";
 }
 
-/* CHANNEL CHECK */
-
 if(!sonyLivSports[tvgId]){
-showError("Channel not found");
+showError('Channel "'+tvgId+'" not found');
 return;
 }
 
-const channelData = Object.assign({cookie:COOKIE},sonyLivSports[tvgId]);
+const channelData=Object.assign({cookie:COOKIE},sonyLivSports[tvgId]);
 
-document.title = channelData.name + " - JioTV Player";
-
-/* PLAYER */
+document.title=channelData.name+" - JioTV Player";
 
 const video=document.querySelector("video");
 const player=new shaka.Player();
 await player.attach(video);
-
-/* UI */
 
 const ui=new shaka.ui.Overlay(
 player,
@@ -239,23 +161,17 @@ played:"white"
 }
 });
 
-/* DRM */
-
 let drmConfig={};
 
 if(channelData.clearKey){
-
 drmConfig={
 clearKeys:{
 [channelData.clearKey.keyId]:channelData.clearKey.key
 }
 };
-
 }
 
 player.configure({drm:drmConfig});
-
-/* HEADERS */
 
 player.getNetworkingEngine().registerRequestFilter((type,request)=>{
 
@@ -281,14 +197,10 @@ request.uris[0]+=sep+channelData.cookie;
 
 });
 
-/* ERROR */
-
 player.addEventListener("error",(event)=>{
-console.error(event.detail);
-showError("Playback error");
+console.error("Player error:",event.detail);
+showError("Playback error: "+(event.detail.message||"Unknown error"));
 });
-
-/* LOAD STREAM */
 
 try{
 
@@ -297,7 +209,8 @@ video.play();
 
 }catch(e){
 
-showError("Stream failed to load");
+console.error("Load error:",e);
+showError("Failed to load stream: "+e.message);
 
 }
 
