@@ -1,161 +1,342 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JioTV Player</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body {
-            background: #000;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        .shaka-video-container {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            background: #000;
-            object-fit: contain;
-        }
-        .shaka-spinner-container, .shaka-spinner, .shaka-spinner-svg {
-            display: none !important;
-        }
-        .error-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            background: rgba(255,0,0,0.3);
-            border-radius: 8px;
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>BigFoot Player</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/controls.min.css" crossorigin="anonymous">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family:sans-serif;
+}
+
+#wrap{
+    position:absolute;
+    inset:0;
+}
+
+#video{
+    width:100%;
+    height:100%;
+}
+
+.shaka-spinner-container{
+    display:none!important;
+}
+
+#loader{
+    position:fixed;
+    inset:0;
+    background:#000;
+    z-index:999;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    transition:opacity .4s;
+}
+
+#loader.gone{
+    opacity:0;
+    pointer-events:none;
+}
+
+#ring{
+    width:42px;
+    height:42px;
+    border:3px solid rgba(232,255,71,.12);
+    border-top-color:#e8ff47;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg)
+    }
+}
+
+#llbl{
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.12em;
+    color:rgba(255,255,255,.25);
+}
+
+#wm{
+    position:fixed;
+    top:12px;
+    left:1px;
+    z-index:900;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(0,136,204,.18);
+    backdrop-filter:blur(8px);
+    border:1px solid rgba(0,136,204,.28);
+    padding:6px 11px;
+    border-radius:7px;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    text-decoration:none;
+}
+
+/* ===== POPUP CSS ===== */
+
+.modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    backdrop-filter:blur(6px);
+    background:rgba(0,0,0,0.4);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    animation:fadeIn .5s ease;
+}
+
+.modal.hidden{
+    display:none!important;
+}
+
+.modal-content{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:30px 25px;
+    width:90%;
+    max-width:400px;
+    text-align:center;
+    color:#f3f4f6;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    backdrop-filter:blur(12px);
+    transform:scale(.95);
+    animation:scaleIn .4s ease forwards;
+}
+
+.modal-content h2{
+    font-size:24px;
+    font-weight:700;
+    color:#facc15;
+    margin-bottom:16px;
+}
+
+.modal-content p{
+    font-size:16px;
+    color:#d1d5db;
+    margin-bottom:24px;
+    line-height:1.5;
+}
+
+.modal-content strong{
+    color:#fff;
+}
+
+.modal-content .btn{
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    border:none;
+    border-radius:12px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+#joinButton{
+    background:linear-gradient(to right,#3b82f6,#06b6d4);
+    color:#fff;
+    font-weight:500;
+}
+
+#joinButton:hover{
+    background:linear-gradient(to right,#2563eb,#0891b2);
+    transform:scale(1.02);
+}
+
+#closeButton{
+    background:rgba(255,255,255,0.1);
+    color:#f3f4f6;
+}
+
+#closeButton:hover{
+    background:rgba(255,255,255,0.15);
+    transform:scale(1.02);
+}
+
+@keyframes fadeIn{
+    from{opacity:0}
+    to{opacity:1}
+}
+
+@keyframes scaleIn{
+    to{
+        transform:scale(1);
+        opacity:1
+    }
+}
+</style>
 </head>
+
 <body>
-    <div class="shaka-video-container" data-shaka-player>
-        <video autoplay playsinline preload="metadata"></video>
+
+<a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" id="wm">
+@Shrey7nsh FB
+</a>
+
+<div id="wrap" data-shaka-player-container>
+    <video autoplay playsinline data-shaka-player id="video"></video>
+</div>
+
+<div id="loader">
+    <div id="ring"></div>
+    <div id="llbl">LOADING STREAM</div>
+</div>
+
+<!-- TELEGRAM POPUP -->
+
+<div id="telegramModal" class="modal">
+    <div class="modal-content">
+
+        <h2>Join Our Telegram</h2>
+
+        <p>
+            Stay updated with the latest
+            <strong>Live Match Links</strong>
+            and updates. Click below to join our official Telegram channel.
+        </p>
+
+        <a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" style="text-decoration:none;">
+            <button id="joinButton" class="btn">
+                Join Telegram
+            </button>
+        </a>
+
+        <button id="closeButton" class="btn">
+            Maybe Later
+        </button>
+
     </div>
-    <div class="error-message" id="errorMsg"></div>
+</div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        shaka.polyfill.installAll();
+<script>
 
-        if (!shaka.Player.isBrowserSupported()) {
-            showError('Browser not supported');
+document.addEventListener('shaka-ui-loaded', initPlayer);
+
+async function initPlayer(){
+
+    const video = document.getElementById('video');
+    const player = video.ui.getControls().getPlayer();
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    if(!id){
+        document.getElementById('llbl').textContent = "NO STREAM ID";
+        return;
+    }
+
+    try{
+
+        // FETCH CHANNEL DATA BY ID
+        const res = await fetch(
+            `https://SportsEera.great-site.net/lchd.php?id=${id}`
+        );
+
+        const data = await res.json();
+
+        // GET STREAM OBJECT
+        const stream = data[id];
+
+        if(!stream){
+            document.getElementById('llbl').textContent = "STREAM NOT FOUND";
             return;
         }
 
-        const tvgId = new URLSearchParams(window.location.search).get('tvid');
-        if (!tvgId) {
-            showError('Please provide tvid parameter (e.g., ?tvid=s1)');
-            return;
-        }
-
-        // Cookie baked in server-side — no fetch needed
-        const COOKIE = "__hdnea__=st=1773700261~exp=1773721861~acl=/*~hmac=6adfb98b5e160a22fe473ff97dc18f17ed1edeebca6ee87471fd869694ff8d17";
-
-        const sonyLivSports = {
-            's1': {
-                name: 'Sony LIV Sports 1',
-                streamUrl: 'https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_1_MOB/WDVLive/index.mpd',
-                clearKey: { keyId: '4e4c5dba5bfe5a7c9338bc086eb80379', key: 'b8e8932f440084e1d2b705fa52eef94b' }
-            },
-            's2': {
-                name: 'Sony LIV Sports 2',
-                streamUrl: 'https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_2_MOB/WDVLive/index.mpd',
-                clearKey: { keyId: 'ef24516ae38b50d18049343cd1cd998a', key: 'eb4810ec250a1795a0019dba7881ff45' }
-            },
-            's3': {
-                name: 'Sony LIV Sports 3',
-                streamUrl: 'https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_3_MOB/WDVLive/index.mpd',
-                clearKey: { keyId: '3afa887864e6545aa006db21aeb39054', key: '6b8cce271f3cd923d0df32d45b44f6df' }
-            },
-            's5': {
-                name: 'Sony LIV Sports 5',
-                streamUrl: 'https://jiotvpllive.cdn.jio.com/bpk-tv/SonyLIV_Sports_5_MOB/WDVLive/index.mpd',
-                clearKey: { keyId: 'cee8550bf50b569d8ad2ed0c5264f0d2', key: '565a95f1c332c03534e1e5fcc1ff9a8b' }
-            }
-        };
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMsg');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-
-        if (!sonyLivSports[tvgId]) {
-            showError('Channel "' + tvgId + '" not found');
-            return;
-        }
-
-        const channelData = Object.assign({ cookie: COOKIE }, sonyLivSports[tvgId]);
-        console.log('Playing:', channelData.name);
-        document.title = channelData.name + ' - JioTV Player';
-
-        const video = document.querySelector('video');
-        const player = new shaka.Player();
-        await player.attach(video);
-
-        const ui = new shaka.ui.Overlay(player, document.querySelector('.shaka-video-container'), video);
-        ui.configure({
-            controlPanelElements: ['play_pause','time_and_duration','mute','volume','spacer','language','captions','picture_in_picture','quality','fullscreen'],
-            seekBarColors: {
-                base: 'white',
-                buffered: 'blue',
-                played: 'white'
+        // DRM CONFIG
+        player.configure({
+            drm:{
+                clearKeys: stream.keys
             }
         });
 
-        let drmConfig = {};
-        if (channelData.clearKey) {
-            drmConfig = {
-                clearKeys: {
-                    [channelData.clearKey.keyId]: channelData.clearKey.key
-                }
-            };
+        // LOAD MPD
+        await player.load(stream.url);
+
+        // OPTIONAL POSTER
+        if(stream.poster){
+            video.poster = stream.poster;
         }
 
-        player.configure({ drm: drmConfig });
+        // HIDE LOADER
+        document.getElementById('loader').classList.add('gone');
 
-        player.getNetworkingEngine().registerRequestFilter((type, request) => {
-            request.headers['Referer'] = 'https://www.jiotv.com/';
-            request.headers['User-Agent'] = 'plaYtv/7.1.3 (Linux;Android 13) ygx/69.1 ExoPlayerLib/824.0';
-            if (channelData.cookie) {
-                request.headers['Cookie'] = channelData.cookie;
-            }
-            if (channelData.cookie && (type === shaka.net.NetworkingEngine.RequestType.MANIFEST || type === shaka.net.NetworkingEngine.RequestType.SEGMENT) && request.uris[0] && !request.uris[0].includes('__hdnea__=')) {
-                const sep = request.uris[0].includes('?') ? '&' : '?';
-                request.uris[0] += sep + channelData.cookie;
-            }
-        });
+    }catch(e){
 
-        player.addEventListener('error', async (event) => {
-            console.error('Player error:', event.detail);
-            showError('Playback error: ' + (event.detail.message || 'Unknown error'));
-        });
+        console.error(e);
 
-        try {
-            await player.load(channelData.streamUrl);
-            video.play();
-        } catch (e) {
-            console.error('Load error:', e);
-            showError('Failed to load stream: ' + e.message);
-        }
-    });
-    </script>
+        document.getElementById('llbl').textContent = "STREAM FAILED";
+
+        document.getElementById('loader').classList.add('gone');
+    }
+}
+
+// POPUP CLOSE
+
+window.addEventListener("DOMContentLoaded", function(){
+
+    document.getElementById("closeButton").onclick = function(){
+
+        document.getElementById("telegramModal").classList.add("hidden");
+    };
+});
+
+// WAKE LOCK
+
+if('wakeLock' in navigator){
+
+    navigator.wakeLock.request('screen').catch(()=>{});
+}
+
+</script>
+<!-- Anti-debugging -->
+<script src="https://cdn.jsdelivr.net/npm/disable-devtool@latest"></script>
+<script>
+DisableDevtool({
+  disable: true,
+  disableMenu: true,
+  clearLog: true,
+  disableSelect: true,
+  disableCopy: true,
+  disableCut: true,
+  disablePaste: true,
+  interval: 10,
+  disableMobile: true,
+  ondevtoolopen: function () {
+    window.location.href = "about:blank";
+  },
+});
+</script> 
 </body>
 </html>
